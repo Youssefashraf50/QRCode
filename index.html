@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مولد باركود حقيقي</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        #qrcode {
+            margin: 20px auto;
+            padding: 10px;
+            border: 1px solid #eee;
+        }
+        #error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 مولد باركود حقيقي</h1>
+        <p>أدخل رقم هاتف أو رابط لإنشاء باركود يمكن مسحه ضوئيًا</p>
+        
+        <textarea id="text" placeholder="مثال: https://google.com أو 0123456789"></textarea>
+        <button onclick="generateQR()">إنشاء الباركود</button>
+        <button onclick="downloadQR()">حفظ الباركود</button>
+        
+        <div id="qrcode"></div>
+        <p id="error"></p>
+    </div>
+
+    <!-- مكتبة QRCode.js من CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    
+    <script>
+        let qrCodeData = null;
+
+        function generateQR() {
+            const text = document.getElementById("text").value.trim();
+            const errorElement = document.getElementById("error");
+            
+            if (!text) {
+                errorElement.textContent = "⚠️ الرجاء إدخال نص أو رابط أولاً";
+                return;
+            }
+            
+            errorElement.textContent = "";
+            document.getElementById("qrcode").innerHTML = "";
+            
+            QRCode.toCanvas(
+                text,
+                { width: 200, margin: 1 },
+                (err, canvas) => {
+                    if (err) {
+                        errorElement.textContent = "❌ حدث خطأ في إنشاء الباركود";
+                        return;
+                    }
+                    document.getElementById("qrcode").appendChild(canvas);
+                    qrCodeData = text;
+                }
+            );
+        }
+        
+        function downloadQR() {
+            if (!qrCodeData) {
+                document.getElementById("error").textContent = "❌ لا يوجد باركود لتحميله";
+                return;
+            }
+            
+            const canvas = document.querySelector("#qrcode canvas");
+            const link = document.createElement("a");
+            link.download = "باركود.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        }
+    </script>
+</body>
+</html>
