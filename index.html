@@ -3,98 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مولد باركود حقيقي</title>
+    <title>مولد ومحلل الباركود</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
             background-color: #f5f5f5;
+            padding: 20px;
         }
         .container {
-            max-width: 500px;
+            max-width: 800px;
             margin: 0 auto;
             background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        textarea {
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        textarea, button, input[type="file"] {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 5px;
-            resize: vertical;
-            min-height: 80px;
+            font-size: 16px;
         }
         button {
-            background: #27ae60;
+            background-color: #3498db;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
             cursor: pointer;
-            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
         }
         #qrcode {
             margin: 20px auto;
-            padding: 10px;
-            border: 1px solid #eee;
+            text-align: center;
         }
-        #error {
-            color: red;
+        #image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            display: block;
+            margin: 15px auto;
+            border: 1px dashed #ccc;
+            display: none;
+        }
+        #result {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-top: 15px;
+            word-break: break-all;
+        }
+        .tab {
+            display: inline-block;
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #eee;
+            margin-right: 5px;
+        }
+        .active-tab {
+            background: #3498db;
+            color: white;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎯 مولد باركود حقيقي</h1>
-        <p>أدخل رقم هاتف أو رابط لإنشاء باركود يمكن مسحه ضوئيًا</p>
+        <h1>🎯 مولد ومحلل الباركود</h1>
         
-        <textarea id="text" placeholder="مثال: https://google.com أو 0123456789"></textarea>
-        <button onclick="generateQR()">إنشاء الباركود</button>
-        <button onclick="downloadQR()">حفظ الباركود</button>
+        <div class="tabs">
+            <div class="tab active-tab" onclick="switchTab('generate')">إنشاء باركود</div>
+            <div class="tab" onclick="switchTab('scan')">قراءة باركود</div>
+        </div>
         
-        <div id="qrcode"></div>
-        <p id="error"></p>
+        <!-- قسم إنشاء الباركود -->
+        <div id="generate-section" class="section">
+            <h2>إنشاء باركود جديد</h2>
+            <textarea id="text-input" placeholder="أدخل النص أو الرابط هنا..."></textarea>
+            <button onclick="generateQR()">إنشاء الباركود</button>
+            <div id="qrcode"></div>
+            <button onclick="downloadQR()" style="background:#27ae60;">تحميل الباركود</button>
+        </div>
+        
+        <!-- قسم قراءة الباركود -->
+        <div id="scan-section" class="section" style="display:none;">
+            <h2>قراءة باركود من صورة</h2>
+            <input type="file" id="image-input" accept="image/*">
+            <p>أو اسحب الصورة هنا</p>
+            <img id="image-preview" alt="معاينة الصورة">
+            <div id="result"></div>
+        </div>
     </div>
 
-    <!-- مكتبة QRCode.js من CDN -->
+    <!-- المكتبات المطلوبة -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     
     <script>
-        let qrCodeData = null;
-
+        // المتغيرات العامة
+        let currentQR = null;
+        
+        // تبديل الأقسام
+        function switchTab(tabName) {
+            document.getElementById('generate-section').style.display = 
+                (tabName === 'generate') ? 'block' : 'none';
+            document.getElementById('scan-section').style.display = 
+                (tabName === 'scan') ? 'block' : 'none';
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active-tab');
+            });
+            event.target.classList.add('active-tab');
+        }
+        
+        // إنشاء باركود
         function generateQR() {
-            const text = document.getElementById("text").value.trim();
-            const errorElement = document.getElementById("error");
+            const text = document.getElementById("text-input").value.trim();
+            const qrcodeDiv = document.getElementById("qrcode");
             
             if (!text) {
-                errorElement.textContent = "⚠️ الرجاء إدخال نص أو رابط أولاً";
+                alert("الرجاء إدخال نص أو رابط أولاً");
                 return;
             }
             
-            errorElement.textContent = "";
-            document.getElementById("qrcode").innerHTML = "";
-            
-            QRCode.toCanvas(
-                text,
-                { width: 200, margin: 1 },
-                (err, canvas) => {
-                    if (err) {
-                        errorElement.textContent = "❌ حدث خطأ في إنشاء الباركود";
-                        return;
-                    }
-                    document.getElementById("qrcode").appendChild(canvas);
-                    qrCodeData = text;
+            qrcodeDiv.innerHTML = "";
+            QRCode.toCanvas(text, { width: 200 }, (err, canvas) => {
+                if (err) {
+                    console.error(err);
+                    alert("حدث خطأ أثناء إنشاء الباركود");
+                    return;
                 }
-            );
+                qrcodeDiv.appendChild(canvas);
+                currentQR = text;
+            });
         }
         
+        // تحميل الباركود
         function downloadQR() {
-            if (!qrCodeData) {
-                document.getElementById("error").textContent = "❌ لا يوجد باركود لتحميله";
+            if (!currentQR) {
+                alert("لا يوجد باركود لتحميله");
                 return;
             }
             
@@ -104,6 +161,72 @@
             link.href = canvas.toDataURL("image/png");
             link.click();
         }
+        
+        // تحليل الباركود من الصورة
+        document.getElementById('image-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imagePreview = document.getElementById('image-preview');
+                imagePreview.src = event.target.result;
+                imagePreview.style.display = 'block';
+                analyzeImage(event.target.result);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // دالة التحليل
+        function analyzeImage(imageData) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                const resultDiv = document.getElementById('result');
+                if (code) {
+                    resultDiv.innerHTML = `
+                        <strong>تم العثور على باركود:</strong><br>
+                        ${code.data}<br><br>
+                        <button onclick="useThisCode('${code.data}')" 
+                                style="background:#27ae60;">
+                            استخدام هذا النص
+                        </button>
+                    `;
+                } else {
+                    resultDiv.innerHTML = "❌ لم يتم العثور على باركود في الصورة";
+                }
+            };
+            img.src = imageData;
+        }
+        
+        // استخدام النص الممسوح
+        function useThisCode(text) {
+            switchTab('generate');
+            document.getElementById('text-input').value = text;
+            generateQR();
+        }
+        
+        // دعم سحب وإفلات الصور
+        document.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('drop', function(e) {
+            e.preventDefault();
+            if (e.dataTransfer.files.length) {
+                document.getElementById('image-input').files = e.dataTransfer.files;
+                const event = new Event('change');
+                document.getElementById('image-input').dispatchEvent(event);
+            }
+        });
     </script>
 </body>
 </html>
