@@ -1,232 +1,191 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مولد ومحلل الباركود</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .section {
-            margin-bottom: 30px;
-            padding: 20px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-        }
-        h1, h2 {
-            color: #2c3e50;
-            text-align: center;
-        }
-        textarea, button, input[type="file"] {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        #qrcode {
-            margin: 20px auto;
-            text-align: center;
-        }
-        #image-preview {
-            max-width: 100%;
-            max-height: 300px;
-            display: block;
-            margin: 15px auto;
-            border: 1px dashed #ccc;
-            display: none;
-        }
-        #result {
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            margin-top: 15px;
-            word-break: break-all;
-        }
-        .tab {
-            display: inline-block;
-            padding: 10px 20px;
-            cursor: pointer;
-            background: #eee;
-            margin-right: 5px;
-        }
-        .active-tab {
-            background: #3498db;
-            color: white;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مولد QR Code</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+    background: #f3f4f8; color: #1d1f27; display: flex; justify-content: center; padding: 24px 16px;
+  }
+  .card {
+    width: 100%; max-width: 440px; background: #fff; border-radius: 16px; padding: 24px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.08);
+  }
+  h1 { margin: 0 0 16px; font-size: 22px; text-align: center; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab {
+    flex: 1; padding: 10px; border: 0; border-radius: 10px; background: #eceef4;
+    font-size: 15px; cursor: pointer; font-family: inherit;
+  }
+  .tab.active { background: #3b5bdb; color: #fff; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  input[type=text], input[type=file] {
+    width: 100%; padding: 12px; border: 1px solid #cfd3de; border-radius: 10px; font-size: 15px;
+    font-family: inherit; background: #fff;
+  }
+  button.main {
+    width: 100%; margin-top: 12px; padding: 12px; border: 0; border-radius: 10px;
+    background: #3b5bdb; color: #fff; font-size: 16px; cursor: pointer; font-family: inherit;
+  }
+  button.main:disabled { opacity: .6; cursor: default; }
+  button.secondary { background: #2f9e44; }
+  #preview { display: none; max-width: 100%; max-height: 180px; margin: 12px auto 0; border-radius: 10px; }
+  #status { margin-top: 12px; min-height: 20px; text-align: center; font-size: 14px; color: #555; }
+  #status.error { color: #c92a2a; }
+  #result { display: none; text-align: center; margin-top: 16px; }
+  #qrcode { display: inline-block; padding: 12px; background: #fff; border: 1px solid #e3e6ee; border-radius: 12px; }
+  #link { display: block; margin-top: 10px; font-size: 13px; word-break: break-all; color: #3b5bdb; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎯 مولد ومحلل الباركود</h1>
-        
-        <div class="tabs">
-            <div class="tab active-tab" onclick="switchTab('generate')">إنشاء باركود</div>
-            <div class="tab" onclick="switchTab('scan')">قراءة باركود</div>
-        </div>
-        
-        <!-- قسم إنشاء الباركود -->
-        <div id="generate-section" class="section">
-            <h2>إنشاء باركود جديد</h2>
-            <textarea id="text-input" placeholder="أدخل النص أو الرابط هنا..."></textarea>
-            <button onclick="generateQR()">إنشاء الباركود</button>
-            <div id="qrcode"></div>
-            <button onclick="downloadQR()" style="background:#27ae60;">تحميل الباركود</button>
-        </div>
-        
-        <!-- قسم قراءة الباركود -->
-        <div id="scan-section" class="section" style="display:none;">
-            <h2>قراءة باركود من صورة</h2>
-            <input type="file" id="image-input" accept="image/*">
-            <p>أو اسحب الصورة هنا</p>
-            <img id="image-preview" alt="معاينة الصورة">
-            <div id="result"></div>
-        </div>
-    </div>
+<div class="card">
+  <h1>مولد QR Code</h1>
 
-    <!-- المكتبات المطلوبة -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    
-    <script>
-        // المتغيرات العامة
-        let currentQR = null;
-        
-        // تبديل الأقسام
-        function switchTab(tabName) {
-            document.getElementById('generate-section').style.display = 
-                (tabName === 'generate') ? 'block' : 'none';
-            document.getElementById('scan-section').style.display = 
-                (tabName === 'scan') ? 'block' : 'none';
-            
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active-tab');
-            });
-            event.target.classList.add('active-tab');
-        }
-        
-        // إنشاء باركود
-        function generateQR() {
-            const text = document.getElementById("text-input").value.trim();
-            const qrcodeDiv = document.getElementById("qrcode");
-            
-            if (!text) {
-                alert("الرجاء إدخال نص أو رابط أولاً");
-                return;
-            }
-            
-            qrcodeDiv.innerHTML = "";
-            QRCode.toCanvas(text, { width: 200 }, (err, canvas) => {
-                if (err) {
-                    console.error(err);
-                    alert("حدث خطأ أثناء إنشاء الباركود");
-                    return;
-                }
-                qrcodeDiv.appendChild(canvas);
-                currentQR = text;
-            });
-        }
-        
-        // تحميل الباركود
-        function downloadQR() {
-            if (!currentQR) {
-                alert("لا يوجد باركود لتحميله");
-                return;
-            }
-            
-            const canvas = document.querySelector("#qrcode canvas");
-            const link = document.createElement("a");
-            link.download = "باركود.png";
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-        }
-        
-        // تحليل الباركود من الصورة
-        document.getElementById('image-input').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const imagePreview = document.getElementById('image-preview');
-                imagePreview.src = event.target.result;
-                imagePreview.style.display = 'block';
-                analyzeImage(event.target.result);
-            };
-            reader.readAsDataURL(file);
-        });
-        
-        // دالة التحليل
-        function analyzeImage(imageData) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                
-                const resultDiv = document.getElementById('result');
-                if (code) {
-                    resultDiv.innerHTML = `
-                        <strong>تم العثور على باركود:</strong><br>
-                        ${code.data}<br><br>
-                        <button onclick="useThisCode('${code.data}')" 
-                                style="background:#27ae60;">
-                            استخدام هذا النص
-                        </button>
-                    `;
-                } else {
-                    resultDiv.innerHTML = "❌ لم يتم العثور على باركود في الصورة";
-                }
-            };
-            img.src = imageData;
-        }
-        
-        // استخدام النص الممسوح
-        function useThisCode(text) {
-            switchTab('generate');
-            document.getElementById('text-input').value = text;
-            generateQR();
-        }
-        
-        // دعم سحب وإفلات الصور
-        document.addEventListener('dragover', function(e) {
-            e.preventDefault();
-        });
-        
-        document.addEventListener('drop', function(e) {
-            e.preventDefault();
-            if (e.dataTransfer.files.length) {
-                document.getElementById('image-input').files = e.dataTransfer.files;
-                const event = new Event('change');
-                document.getElementById('image-input').dispatchEvent(event);
-            }
-        });
-    </script>
+  <div class="tabs">
+    <button class="tab active" data-tab="image-panel">من صورة</button>
+    <button class="tab" data-tab="text-panel">من نص أو رابط</button>
+  </div>
+
+  <div id="image-panel" class="panel active">
+    <input type="file" id="image-input" accept="image/*">
+    <img id="preview" alt="معاينة الصورة">
+    <button class="main" id="image-btn">رفع الصورة وإنشاء QR</button>
+  </div>
+
+  <div id="text-panel" class="panel">
+    <input type="text" id="text-input" placeholder="اكتب نص أو رابط">
+    <button class="main" id="text-btn">إنشاء QR</button>
+  </div>
+
+  <div id="status"></div>
+
+  <div id="result">
+    <div id="qrcode"></div>
+    <a id="link" target="_blank" rel="noopener"></a>
+    <button class="main secondary" id="download-btn">تحميل صورة QR</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  // مفتاح imgbb. لو غيرته من موقعهم حط الجديد هنا.
+  const IMGBB_KEY = 'dd38c6bd7f7c9fd626e1e874c02db6be';
+  const MAX_SIZE_MB = 16;
+
+  const $ = (id) => document.getElementById(id);
+  const statusEl = $('status');
+  const resultEl = $('result');
+  const qrBox = $('qrcode');
+
+  function setStatus(msg, isError) {
+    statusEl.textContent = msg || '';
+    statusEl.classList.toggle('error', !!isError);
+  }
+
+  // التبديل بين التابات
+  document.querySelectorAll('.tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
+      btn.classList.add('active');
+      $(btn.dataset.tab).classList.add('active');
+      setStatus('');
+    });
+  });
+
+  function showQR(text) {
+    qrBox.innerHTML = '';
+    new QRCode(qrBox, {
+      text: text,
+      width: 240,
+      height: 240,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    const link = $('link');
+    if (/^https?:\/\//i.test(text)) {
+      link.textContent = text;
+      link.href = text;
+      link.style.display = 'block';
+    } else {
+      link.style.display = 'none';
+    }
+    resultEl.style.display = 'block';
+  }
+
+  // معاينة الصورة
+  $('image-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    const preview = $('preview');
+    if (!file) { preview.style.display = 'none'; return; }
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    setStatus('');
+  });
+
+  // رفع الصورة وإنشاء QR
+  $('image-btn').addEventListener('click', async () => {
+    const file = $('image-input').files[0];
+    if (!file) { setStatus('اختار صورة الأول', true); return; }
+    if (!file.type.startsWith('image/')) { setStatus('الملف لازم يكون صورة', true); return; }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) { setStatus('الصورة أكبر من ' + MAX_SIZE_MB + ' ميجا', true); return; }
+
+    const btn = $('image-btn');
+    btn.disabled = true;
+    resultEl.style.display = 'none';
+    setStatus('جاري رفع الصورة...');
+
+    try {
+      const form = new FormData();
+      form.append('image', file);
+      const res = await fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_KEY, {
+        method: 'POST',
+        body: form
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error((json.error && json.error.message) || 'فشل الرفع');
+      }
+      const url = json.data.url; // رابط مباشر للصورة بدون إعلانات
+      showQR(url);
+      setStatus('تم! أي حد يعمل سكان هيشوف الصورة.');
+    } catch (err) {
+      console.error(err);
+      setStatus('حصل خطأ في الرفع: ' + err.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // QR من نص
+  $('text-btn').addEventListener('click', () => {
+    const text = $('text-input').value.trim();
+    if (!text) { setStatus('اكتب نص أو رابط الأول', true); resultEl.style.display = 'none'; return; }
+    setStatus('');
+    showQR(text);
+  });
+
+  // تحميل صورة الـ QR
+  $('download-btn').addEventListener('click', () => {
+    const canvas = qrBox.querySelector('canvas');
+    const img = qrBox.querySelector('img');
+    let dataUrl = null;
+    if (img && img.src && img.src.startsWith('data:')) dataUrl = img.src;
+    else if (canvas) dataUrl = canvas.toDataURL('image/png');
+    if (!dataUrl) { setStatus('مفيش QR للتحميل', true); return; }
+
+    const a = document.createElement('a');
+    a.download = 'qrcode.png';
+    a.href = dataUrl;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+</script>
 </body>
 </html>
